@@ -1,72 +1,108 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-<title>Lucky 9 Casino</title>
+<title>Lucky 9 Casino Online</title>
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
 <style>
 
 body{
-background:radial-gradient(circle,#1a0033,#090014);
-font-family:Arial;
-color:white;
-text-align:center;
+    background: linear-gradient(135deg,#12002b,#3a0066);
+    font-family: 'Segoe UI', Arial;
+    color:white;
+    text-align:center;
 }
 
+/* main table */
 .container{
-width:900px;
-margin:auto;
-margin-top:40px;
-background:#140028;
-padding:30px;
-border-radius:20px;
+    width:760px;
+    margin:auto;
+    margin-top:40px;
+    background: rgba(30,0,60,0.9);
+    padding:30px;
+    border-radius:20px;
+    box-shadow:0 0 40px #7a2cff;
+}
+
+h1{
+    color:#d9a3ff;
+    font-size:40px;
+}
+
+/* divider */
+hr{
+    border:1px solid #7a2cff;
+    margin:20px 0;
+}
+
+.cards{
+    min-height:110px;
 }
 
 .cards img{
-width:90px;
-margin:6px;
-opacity:0;
-transform:translateY(-40px);
-transition:.4s;
+    width:90px;
+    margin:6px;
+    transition: transform .2s;
 }
 
-.cards img.show{
-opacity:1;
-transform:translateY(0);
+.cards img:hover{
+    transform:scale(1.1);
 }
+
+/* buttons */
 
 button{
-padding:12px 25px;
-margin:10px;
-border:none;
-border-radius:10px;
-background:#7b00ff;
-color:white;
-cursor:pointer;
+    padding:12px 28px;
+    font-size:16px;
+    background:#7a2cff;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    color:white;
+    margin:10px;
+    transition:0.2s;
 }
 
 button:hover{
-background:#9f44ff;
+    background:#a855ff;
+    transform:scale(1.05);
 }
+
+button:disabled{
+    background:#555;
+}
+
+/* inputs */
 
 input{
-padding:10px;
-font-size:16px;
+    padding:10px;
+    border-radius:8px;
+    border:none;
+    font-size:16px;
 }
 
-#fightBtn{
-display:none;
-}
+/* winner text */
 
 #winner{
-font-size:30px;
-color:gold;
-margin-top:20px;
+    font-size:32px;
+    color:#ffd700;
+    margin-top:20px;
+}
+
+.playerBox{
+    background:rgba(60,0,120,0.5);
+    border-radius:15px;
+    padding:15px;
+    margin:15px 0;
+}
+
+.score{
+    font-size:18px;
+    margin-top:5px;
+    color:#e0c3ff;
 }
 
 </style>
-
 </head>
 
 <body>
@@ -75,41 +111,29 @@ margin-top:20px;
 
 <h1>🎰 Lucky 9 Casino</h1>
 
-Coins: <span id="coins">1000</span>
-
-<br><br>
-
 <input id="room" placeholder="Room name">
-
 <br><br>
 
-<button onclick="createRoom()">Create Room</button>
-<button onclick="joinRoom()">Join Room</button>
-
-<br><br>
-
-Bet
-<input id="bet" type="number">
-
-<br>
-
-<button onclick="ready()">READY</button>
+<button onclick="join()">Join Game</button>
 
 <h2 id="status"></h2>
 
 <hr>
 
+<div class="playerBox">
 <h2>Player 1</h2>
 <div id="p1Cards" class="cards"></div>
-<div id="p1Score"></div>
+<div id="p1Score" class="score"></div>
+</div>
 
+<div class="playerBox">
 <h2>Player 2</h2>
 <div id="p2Cards" class="cards"></div>
-<div id="p2Score"></div>
+<div id="p2Score" class="score"></div>
+</div>
 
-<br>
-
-<button id="fightBtn" onclick="play()">FIGHT</button>
+<button onclick="play()">🎴 Deal Cards</button>
+<button onclick="hit()">➕ Hit (Request Card)</button>
 
 <h2 id="winner"></h2>
 
@@ -117,116 +141,59 @@ Bet
 
 <script>
 
-var socket = io()
-var room=""
-var coins=1000
+var socket = io();
+var room = "";
 
-function createRoom(){
-
-room=document.getElementById("room").value
-
-socket.emit("create_room",{room:room})
-
+function join(){
+    room = document.getElementById("room").value
+    socket.emit("join",{room:room})
 }
 
-function joinRoom(){
-
-room=document.getElementById("room").value
-
-socket.emit("join_room",{room:room})
-
-}
-
-function ready(){
-
-socket.emit("ready",{room:room})
-
-}
-
-function play(){
-
-let bet=parseInt(document.getElementById("bet").value)
-
-if(bet>coins){
-alert("Not enough coins")
-return
-}
-
-coins-=bet
-document.getElementById("coins").innerHTML=coins
-
-socket.emit("play",{room:room,bet:bet})
-
-}
-
-socket.on("room_created",function(data){
-document.getElementById("status").innerHTML="Room created: "+data.room
-})
-
-socket.on("room_exists",function(){
-document.getElementById("status").innerHTML="Room already exists"
-})
-
-socket.on("room_not_found",function(){
-document.getElementById("status").innerHTML="Room not found"
-})
-
-socket.on("room_full",function(){
-document.getElementById("status").innerHTML="Room full"
+socket.on("waiting",function(){
+    document.getElementById("status").innerHTML="Waiting for Player 2..."
 })
 
 socket.on("start",function(){
-document.getElementById("status").innerHTML="Player joined! Game ready"
+    document.getElementById("status").innerHTML="Game Started!"
 })
 
-socket.on("readyCount",function(data){
+socket.on("full",function(){
+    document.getElementById("status").innerHTML="Room already full"
+})
 
-document.getElementById("status").innerHTML=data.ready+" players ready"
-
-if(data.ready==2){
-document.getElementById("fightBtn").style.display="inline-block"
+function play(){
+    socket.emit("play",{room:room})
 }
 
-})
+/* request another card */
+function hit(){
+    socket.emit("hit",{room:room})
+}
 
 function cardImage(code){
-return "https://deckofcardsapi.com/static/img/"+code+".png"
-}
-
-function deal(container,cards){
-
-container.innerHTML=""
-
-cards.forEach((c,i)=>{
-
-let img=document.createElement("img")
-
-img.src=cardImage(c.code)
-
-setTimeout(()=>{
-img.classList.add("show")
-},300*i)
-
-container.appendChild(img)
-
-})
-
+    return "https://deckofcardsapi.com/static/img/" + code + ".png"
 }
 
 socket.on("result",function(data){
 
-deal(document.getElementById("p1Cards"),data.p1_cards)
-deal(document.getElementById("p2Cards"),data.p2_cards)
+let p1HTML=""
+let p2HTML=""
 
-document.getElementById("p1Score").innerHTML="Score: "+data.p1_score
-document.getElementById("p2Score").innerHTML="Score: "+data.p2_score
+data.p1_cards.forEach(c=>{
+p1HTML += "<img src='"+cardImage(c.code)+"'>"
+})
 
-document.getElementById("winner").innerHTML=data.winner
+data.p2_cards.forEach(c=>{
+p2HTML += "<img src='"+cardImage(c.code)+"'>"
+})
 
-if(data.win){
-coins+=data.pot
-document.getElementById("coins").innerHTML=coins
-}
+document.getElementById("p1Cards").innerHTML = p1HTML
+document.getElementById("p2Cards").innerHTML = p2HTML
+
+document.getElementById("p1Score").innerHTML = "Score: "+data.p1_score
+document.getElementById("p2Score").innerHTML = "Score: "+data.p2_score
+
+document.getElementById("winner").innerHTML = data.winner
 
 })
 
