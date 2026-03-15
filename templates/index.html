@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Lucky 9 Casino</title>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+<style>
+
+body{
+background:radial-gradient(circle,#1a0033,#090014);
+font-family:Arial;
+color:white;
+text-align:center;
+margin:0;
+}
+
+.container{
+width:900px;
+margin:auto;
+margin-top:40px;
+background:#140028;
+padding:30px;
+border-radius:20px;
+box-shadow:0 0 40px rgba(150,0,255,0.6);
+}
+
+h1{
+color:#d580ff;
+font-size:42px;
+text-shadow:0 0 15px #a200ff;
+}
+
+.table{
+background:#1f003d;
+padding:25px;
+border-radius:20px;
+border:3px solid #b84dff;
+box-shadow:inset 0 0 30px black;
+}
+
+.player{
+margin:20px;
+padding:15px;
+border-radius:12px;
+background:#26004d;
+}
+
+.cards img{
+width:90px;
+margin:6px;
+opacity:0;
+transform:translateY(-40px);
+transition:all .5s ease;
+}
+
+.cards img.show{
+opacity:1;
+transform:translateY(0);
+}
+
+button{
+padding:12px 25px;
+font-size:16px;
+background:linear-gradient(45deg,#7b00ff,#d000ff);
+border:none;
+border-radius:12px;
+cursor:pointer;
+margin:10px;
+color:white;
+}
+
+button:hover{
+transform:scale(1.08);
+}
+
+input{
+padding:10px;
+font-size:16px;
+border-radius:8px;
+border:none;
+background:#2a004f;
+color:white;
+}
+
+#hitBtn,#fightBtn{
+display:none;
+}
+
+#winner{
+font-size:30px;
+color:#ffccff;
+margin-top:20px;
+}
+
+.coin{
+color:gold;
+font-size:20px;
+}
+
+.pot{
+font-size:24px;
+color:#ffcc00;
+margin:10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🎰 Lucky 9 Casino</h1>
+
+<div class="coin">
+Coins: <span id="coins">1000</span>
+</div>
+
+<div class="pot">
+Pot: <span id="pot">0</span>
+</div>
+
+<input id="room" placeholder="Room name">
+<br><br>
+
+<input id="bet" type="number" placeholder="Bet amount">
+
+<br><br>
+
+<button onclick="join()">Join Game</button>
+<button onclick="ready()">READY</button>
+
+<h2 id="status"></h2>
+
+<div class="table">
+
+<div class="player">
+<h2>Player 1</h2>
+<div id="p1Cards" class="cards"></div>
+<div id="p1Score"></div>
+</div>
+
+<div class="player">
+<h2>Player 2</h2>
+<div id="p2Cards" class="cards"></div>
+<div id="p2Score"></div>
+</div>
+
+</div>
+
+<button id="hitBtn" onclick="hit()">HIT</button>
+<button id="fightBtn" onclick="play()">FIGHT</button>
+
+<h2 id="winner"></h2>
+
+</div>
+
+<script>
+
+var socket = io();
+var room=""
+var coins=1000
+
+function join(){
+room=document.getElementById("room").value
+socket.emit("join",{room:room})
+}
+
+function ready(){
+socket.emit("ready",{room:room})
+}
+
+function play(){
+
+let bet=parseInt(document.getElementById("bet").value)
+
+if(bet>coins){
+alert("Not enough coins")
+return
+}
+
+coins-=bet
+document.getElementById("coins").innerHTML=coins
+
+socket.emit("play",{room:room,bet:bet})
+
+}
+
+function hit(){
+socket.emit("hit",{room:room})
+}
+
+socket.on("waiting",function(){
+document.getElementById("status").innerHTML="Waiting for Player 2..."
+})
+
+socket.on("start",function(){
+document.getElementById("status").innerHTML="Game Started!"
+})
+
+socket.on("readyCount",function(data){
+
+document.getElementById("status").innerHTML=data.ready+" players ready"
+
+if(data.ready==2){
+document.getElementById("fightBtn").style.display="inline-block"
+document.getElementById("hitBtn").style.display="inline-block"
+}
+
+})
+
+function cardImage(code){
+return "https://deckofcardsapi.com/static/img/"+code+".png"
+}
+
+function dealAnimation(container,cards){
+
+container.innerHTML=""
+
+cards.forEach((c,i)=>{
+
+let img=document.createElement("img")
+img.src=cardImage(c.code)
+
+setTimeout(()=>{
+img.classList.add("show")
+},300*i)
+
+container.appendChild(img)
+
+})
+
+}
+
+socket.on("result",function(data){
+
+dealAnimation(
+document.getElementById("p1Cards"),
+data.p1_cards
+)
+
+dealAnimation(
+document.getElementById("p2Cards"),
+data.p2_cards
+)
+
+document.getElementById("p1Score").innerHTML="Score: "+data.p1_score
+document.getElementById("p2Score").innerHTML="Score: "+data.p2_score
+
+document.getElementById("winner").innerHTML=data.winner
+
+document.getElementById("pot").innerHTML=data.pot
+
+if(data.win){
+coins+=data.pot
+document.getElementById("coins").innerHTML=coins
+}
+
+})
+
+</script>
+
+</body>
+</html>
