@@ -31,36 +31,56 @@ def draw():
 def index():
     return render_template("index.html")
 
-@socketio.on("join")
+# CREATE ROOM
+@socketio.on("create_room")
+def create_room(data):
+
+    room = data["room"]
+
+    if room in rooms:
+        emit("room_exists")
+        return
+
+    rooms[room] = [request.sid]
+    ready[room] = 0
+
+    join_room(room)
+
+    emit("room_created", {"room":room})
+
+# JOIN ROOM
+@socketio.on("join_room")
 def join(data):
 
     room = data["room"]
-    join_room(room)
 
     if room not in rooms:
-        rooms[room] = []
+        emit("room_not_found")
+        return
 
-    if request.sid not in rooms[room]:
-        rooms[room].append(request.sid)
+    if len(rooms[room]) >= 2:
+        emit("room_full")
+        return
 
-    if room not in ready:
-        ready[room] = 0
+    rooms[room].append(request.sid)
 
-    if len(rooms[room]) == 2:
-        socketio.emit("start", room=room)
-    else:
-        emit("waiting")
+    join_room(room)
 
+    socketio.emit("start", room=room)
+
+# READY
 @socketio.on("ready")
 def ready_player(data):
 
     room = data["room"]
+
     ready[room] += 1
 
     socketio.emit("readyCount",{
         "ready": ready[room]
     }, room=room)
 
+# PLAY
 @socketio.on("play")
 def play(data):
 
@@ -84,6 +104,8 @@ def play(data):
     elif p2_score > p1_score:
         winner = "Player 2 Wins"
 
+    ready[room] = 0
+
     socketio.emit("result",{
         "p1_cards":p1,
         "p2_cards":p2,
@@ -95,4 +117,4 @@ def play(data):
     }, room=room)
 
 if __name__ == "__main__":
-    socketio.run(app, host="0.0.0.0", port=5000)
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
