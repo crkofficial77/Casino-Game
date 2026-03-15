@@ -1,108 +1,65 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <title>Lucky 9 Casino Online</title>
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
 <style>
 
 body{
-    background: linear-gradient(135deg,#12002b,#3a0066);
-    font-family: 'Segoe UI', Arial;
-    color:white;
-    text-align:center;
+background:#0b3d0b;
+font-family:Arial;
+color:white;
+text-align:center;
 }
 
-/* main table */
 .container{
-    width:760px;
-    margin:auto;
-    margin-top:40px;
-    background: rgba(30,0,60,0.9);
-    padding:30px;
-    border-radius:20px;
-    box-shadow:0 0 40px #7a2cff;
+width:720px;
+margin:auto;
+margin-top:40px;
+background:#145214;
+padding:30px;
+border-radius:15px;
+box-shadow:0 0 25px black;
 }
 
 h1{
-    color:#d9a3ff;
-    font-size:40px;
-}
-
-/* divider */
-hr{
-    border:1px solid #7a2cff;
-    margin:20px 0;
-}
-
-.cards{
-    min-height:110px;
+color:gold;
 }
 
 .cards img{
-    width:90px;
-    margin:6px;
-    transition: transform .2s;
+width:90px;
+margin:6px;
 }
-
-.cards img:hover{
-    transform:scale(1.1);
-}
-
-/* buttons */
 
 button{
-    padding:12px 28px;
-    font-size:16px;
-    background:#7a2cff;
-    border:none;
-    border-radius:10px;
-    cursor:pointer;
-    color:white;
-    margin:10px;
-    transition:0.2s;
+padding:12px 30px;
+font-size:18px;
+background:gold;
+border:none;
+border-radius:8px;
+cursor:pointer;
+margin-top:20px;
 }
 
 button:hover{
-    background:#a855ff;
-    transform:scale(1.05);
+background:orange;
 }
-
-button:disabled{
-    background:#555;
-}
-
-/* inputs */
 
 input{
-    padding:10px;
-    border-radius:8px;
-    border:none;
-    font-size:16px;
+padding:10px;
+font-size:16px;
 }
-
-/* winner text */
 
 #winner{
-    font-size:32px;
-    color:#ffd700;
-    margin-top:20px;
-}
-
-.playerBox{
-    background:rgba(60,0,120,0.5);
-    border-radius:15px;
-    padding:15px;
-    margin:15px 0;
-}
-
-.score{
-    font-size:18px;
-    margin-top:5px;
-    color:#e0c3ff;
+font-size:30px;
+color:gold;
+margin-top:20px;
 }
 
 </style>
+
 </head>
 
 <body>
@@ -113,27 +70,21 @@ input{
 
 <input id="room" placeholder="Room name">
 <br><br>
-
 <button onclick="join()">Join Game</button>
 
 <h2 id="status"></h2>
 
 <hr>
 
-<div class="playerBox">
 <h2>Player 1</h2>
 <div id="p1Cards" class="cards"></div>
-<div id="p1Score" class="score"></div>
-</div>
+<div id="p1Score"></div>
 
-<div class="playerBox">
 <h2>Player 2</h2>
 <div id="p2Cards" class="cards"></div>
-<div id="p2Score" class="score"></div>
-</div>
+<div id="p2Score"></div>
 
-<button onclick="play()">🎴 Deal Cards</button>
-<button onclick="hit()">➕ Hit (Request Card)</button>
+<button onclick="play()">Play Round</button>
 
 <h2 id="winner"></h2>
 
@@ -145,33 +96,30 @@ var socket = io();
 var room = "";
 
 function join(){
-    room = document.getElementById("room").value
-    socket.emit("join",{room:room})
+
+room = document.getElementById("room").value
+socket.emit("join",{room:room})
+
 }
 
 socket.on("waiting",function(){
-    document.getElementById("status").innerHTML="Waiting for Player 2..."
+document.getElementById("status").innerHTML="Waiting for Player 2..."
 })
 
 socket.on("start",function(){
-    document.getElementById("status").innerHTML="Game Started!"
+document.getElementById("status").innerHTML="Game Started!"
 })
 
 socket.on("full",function(){
-    document.getElementById("status").innerHTML="Room already full"
+document.getElementById("status").innerHTML="Room already full"
 })
 
 function play(){
-    socket.emit("play",{room:room})
-}
-
-/* request another card */
-function hit(){
-    socket.emit("hit",{room:room})
+socket.emit("play",{room:room})
 }
 
 function cardImage(code){
-    return "https://deckofcardsapi.com/static/img/" + code + ".png"
+return "https://deckofcardsapi.com/static/img/" + code + ".png"
 }
 
 socket.on("result",function(data){
