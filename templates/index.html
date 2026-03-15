@@ -8,190 +8,54 @@
 <style>
 
 body{
-background: radial-gradient(circle at top,#2b0050,#0b0018);
-font-family: Arial;
+background:#0b3d0b;
+font-family:Arial;
 color:white;
 text-align:center;
 }
 
-/* casino table */
-
 .container{
-width:800px;
+width:720px;
 margin:auto;
 margin-top:40px;
-padding:40px;
-
-background: radial-gradient(circle,#2b0050,#120028);
-
-border-radius:50px;
-border:3px solid #a855f7;
-
-box-shadow:
-0 0 20px #a855f7,
-0 0 40px #7c3aed,
-0 0 80px #6d28d9 inset;
-
+background:#145214;
+padding:30px;
+border-radius:15px;
+box-shadow:0 0 25px black;
 }
-
-/* title */
 
 h1{
-color:#e9d5ff;
-font-size:40px;
-
-text-shadow:
-0 0 10px #c084fc,
-0 0 25px #a855f7,
-0 0 45px #9333ea;
+color:gold;
 }
-
-/* players */
-
-.player{
-margin-top:30px;
-padding:15px;
-
-border-radius:20px;
-
-background:rgba(50,0,90,0.4);
-
-box-shadow:
-0 0 10px #7c3aed inset;
-}
-
-/* cards */
 
 .cards img{
 width:90px;
 margin:6px;
-
-opacity:0;
-
-transform:translateY(-40px) scale(0.8);
-
-animation:deal 0.6s forwards;
-
-border-radius:8px;
-
-box-shadow:
-0 0 12px #a855f7,
-0 0 25px #7c3aed;
-
-transition:0.2s;
 }
-
-.cards img:hover{
-transform:scale(1.1);
-}
-
-/* dealing animation */
-
-@keyframes deal{
-
-to{
-opacity:1;
-transform:translateY(0) scale(1);
-}
-
-}
-
-/* score */
-
-.score{
-
-font-size:22px;
-margin-top:8px;
-
-color:#c084fc;
-
-text-shadow:
-0 0 10px #a855f7,
-0 0 20px #7c3aed,
-0 0 30px #9333ea;
-
-}
-
-/* buttons */
 
 button{
-
 padding:12px 30px;
-
 font-size:18px;
-
-background:linear-gradient(45deg,#7c3aed,#a855f7);
-
-color:white;
-
+background:gold;
 border:none;
-
-border-radius:10px;
-
+border-radius:8px;
 cursor:pointer;
-
 margin-top:20px;
-
-box-shadow:
-0 0 10px #a855f7,
-0 0 20px #7c3aed;
-
-transition:0.25s;
-
 }
 
 button:hover{
-
-transform:scale(1.05);
-
-box-shadow:
-0 0 20px #c084fc,
-0 0 40px #a855f7;
-
+background:orange;
 }
-
-/* input */
 
 input{
-
 padding:10px;
-
 font-size:16px;
-
-border-radius:8px;
-
-border:none;
-
-background:#1f003b;
-
-color:white;
-
-box-shadow:0 0 10px #7c3aed inset;
-
 }
-
-/* winner */
 
 #winner{
-
-font-size:34px;
-
-color:#facc15;
-
-margin-top:25px;
-
-text-shadow:
-0 0 12px gold,
-0 0 25px orange;
-
-}
-
-hr{
-
-border:1px solid #7c3aed;
-
-box-shadow:0 0 10px #a855f7;
-
+font-size:30px;
+color:gold;
+margin-top:20px;
 }
 
 </style>
@@ -206,34 +70,21 @@ box-shadow:0 0 10px #a855f7;
 
 <input id="room" placeholder="Room name">
 <br><br>
-
 <button onclick="join()">Join Game</button>
 
 <h2 id="status"></h2>
 
 <hr>
 
-<div class="player">
-
 <h2>Player 1</h2>
-
 <div id="p1Cards" class="cards"></div>
-
-<div id="p1Score" class="score"></div>
-
-</div>
-
-<div class="player">
+<div id="p1Score"></div>
 
 <h2>Player 2</h2>
-
 <div id="p2Cards" class="cards"></div>
+<div id="p2Score"></div>
 
-<div id="p2Score" class="score"></div>
-
-</div>
-
-<button onclick="play()">🎴 Deal Cards</button>
+<button onclick="play()">Play Round</button>
 
 <h2 id="winner"></h2>
 
@@ -242,71 +93,52 @@ box-shadow:0 0 10px #a855f7;
 <script>
 
 var socket = io();
-
 var room = "";
 
 function join(){
 
 room = document.getElementById("room").value
-
 socket.emit("join",{room:room})
 
 }
 
 socket.on("waiting",function(){
-
 document.getElementById("status").innerHTML="Waiting for Player 2..."
-
 })
 
 socket.on("start",function(){
-
 document.getElementById("status").innerHTML="Game Started!"
-
 })
 
 socket.on("full",function(){
-
 document.getElementById("status").innerHTML="Room already full"
-
 })
 
 function play(){
-
 socket.emit("play",{room:room})
-
 }
 
 function cardImage(code){
-
 return "https://deckofcardsapi.com/static/img/" + code + ".png"
-
 }
 
 socket.on("result",function(data){
 
 let p1HTML=""
-
 let p2HTML=""
 
-data.p1_cards.forEach((c,i)=>{
-
-p1HTML += "<img style='animation-delay:"+(i*0.3)+"s' src='"+cardImage(c.code)+"'>"
-
+data.p1_cards.forEach(c=>{
+p1HTML += "<img src='"+cardImage(c.code)+"'>"
 })
 
-data.p2_cards.forEach((c,i)=>{
-
-p2HTML += "<img style='animation-delay:"+(i*0.3)+"s' src='"+cardImage(c.code)+"'>"
-
+data.p2_cards.forEach(c=>{
+p2HTML += "<img src='"+cardImage(c.code)+"'>"
 })
 
 document.getElementById("p1Cards").innerHTML = p1HTML
-
 document.getElementById("p2Cards").innerHTML = p2HTML
 
 document.getElementById("p1Score").innerHTML = "Score: "+data.p1_score
-
 document.getElementById("p2Score").innerHTML = "Score: "+data.p2_score
 
 document.getElementById("winner").innerHTML = data.winner
@@ -316,5 +148,4 @@ document.getElementById("winner").innerHTML = data.winner
 </script>
 
 </body>
-
 </html>
